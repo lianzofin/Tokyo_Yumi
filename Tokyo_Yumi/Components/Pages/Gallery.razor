@@ -1,0 +1,345 @@
+﻿@page "/gallery"
+@using Tokyo_Yumi.Data
+@using Tokyo_Yumi.Model
+@inject Tokyo_Yumi.Data.AttractionBase AttractionService
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@using Tokyo_Yumi.Services
+@inject UserService UserService
+
+<PageTitle>גלריית אטרקציות | טוקיו-יומי</PageTitle>
+
+@code {
+    // פונקציה שרצה לאחר שהדף נטען - גורמת לדפדפן לקפוץ לראש הדף (Scroll to top)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        }
+    }
+}
+
+<style>
+    /* הגדרות עיצוב גלובליות ורכיבי ממשק */
+
+    /* ביטול Outline כחול בכל האתר לשיפור הנראות בלחיצה */
+    *:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* עיצוב ה-Hero של הגלריה - שימוש ב-Viewport Width (vw) למתיחה מקצה לקצה */
+    .gallery-hero-full {
+        width: 100vw !important;
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw !important;
+        margin-right: -50vw !important;
+
+        background-image: linear-gradient(rgba(142, 51, 43, 0.85), rgba(0,0,0,0.75)), url('images/newGif.gif');
+
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        padding: 60px 20px;
+        min-height: 55vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        border-radius: 0 !important;
+        clip-path: none !important;
+        border: none;
+    }
+
+    /* מניעת גלילה אופקית בגלל ה-vw של ה-Hero */
+    body {
+        overflow-x: hidden;
+    }
+
+    /* עיצוב כרטיסי האטרקציות המשודרג על פי דרישות המטלה */
+    .home-style-card {
+        border: 1px solid #dee2e6 !important;
+        border-radius: 0.5rem;
+        /* הוספת גרדיאנט לינארי עדין לרקע הכרטיס */
+
+        background-image:
+        linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+
+        /* הוספת צל קבוע עדין במצב רגיל */
+        
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+
+        transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+    }
+
+        /* אפקט ריחוף (Hover) מוגדל ושינוי הצל להדגשת התלת-מימד */
+        .home-style-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 20px rgba(142, 51, 43, 0.15);
+        }
+
+    .card-img-top {
+        height: 350px;
+        object-fit: cover;
+    }
+
+    /* עיצוב כותרת וסיכת מיקום */
+    .card-title-container {
+        display: flex;
+        align-items: center;
+        justify-content: center; /* מרכז את השם והסיכה */
+        gap: 8px; /* רווח קטן בין השם לסיכה */
+        margin-bottom: 15px;
+    }
+
+    .card-title-text {
+        font-weight: bold;
+        color: #000;
+        margin-bottom: 0 !important;
+    }
+
+    .map-pin {
+        text-decoration: none !important;
+        font-size: 1.2rem;
+        line-height: 1;
+        display: inline-block;
+    }
+
+        .map-pin:hover {
+            text-decoration: none !important;
+            transform: scale(1.2);
+        }
+
+    .card-text-custom {
+        text-align: right;
+        color: #333;
+        line-height: 1.6;
+    }
+
+    .btn-tokyo-red {
+        background-color: #e60012;
+        color: white;
+        border: none;
+    }
+
+    /* עיצוב הפוטר (Footer) */
+    .footer-light {
+        background-color: #ffffff;
+        border-top: 1px solid #eee;
+    }
+
+    .footer-link-light {
+        color: #444;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+    }
+
+        .footer-link-light:hover {
+            color: #8E332B;
+            text-decoration: none;
+        }
+
+    .footer-divider {
+        border-color: #eee;
+    }
+</style>
+
+@* תפריט ניווט עליון *@
+<div class="tokyo-yumi-layout">
+    <nav class="top-nav-bar d-flex justify-content-between align-items-center p-3">
+        <div class="right-nav-section d-flex align-items-center">
+            <h7 style="font-weight: bold; margin-bottom: 0;">
+                <a href="/landing" class="d-flex align-items-center" style="text-decoration: none; color: inherit; gap: 10px;">
+                    <img src="/images/logo2.png" alt="Logo" style="height:50px; width: auto; object-fit: contain;">
+                    <span>טוקיו-יומי - פשוט לחוות את טוקיו!</span>
+                </a>
+            </h7>
+        </div>
+
+        <div class="left-nav-section d-flex align-items-center">
+            <a href="/" class="nav-link-btn users-list-btn">להתנתק</a>
+        </div>
+    </nav>
+</div>
+
+@* חלק ה-Hero הכולל את טופס החיפוש *@
+<header class="gallery-hero-full mb-5 text-center">
+    <h1 class="display-4 fw-bold mb-3">גלריית האטרקציות של טוקיו-יומי</h1>
+
+    <h3 class="fw-bold mb-4" style="max-width: 900px;">גלו את האטרקציות המובילות בטוקיו</h3>
+
+    <div class="mb-2 mx-auto" style="width: 100%; max-width: 1100px;">
+        <form method="get" action="/gallery" class="row g-2 w-100">
+            @* חיפוש טקסט חופשי *@
+            <div class="col-md-7">
+                <input type="text" name="q" value="@Q"
+                       class="form-control form-control-lg shadow-sm"
+                       placeholder="חפש לפי שם אטרקציה..." dir="rtl">
+            </div>
+
+            @* בחירת קטגוריה *@
+            <div class="col-md-3">
+                <select name="cat" class="form-select form-select-lg shadow-sm" @bind="Cat" dir="rtl">
+                    <option value="">כל הקטגוריות</option>
+                    <option value="בילוי">בילוי</option>
+                    <option value="טבע">טבע</option>
+                    <option value="פארק">פארק</option>
+                    <option value="מוזיאון">מוזיאון</option>
+                    <option value="קניות">קניות</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-tokyo-red btn-lg w-100 shadow-sm">חיפוש</button>
+            </div>
+        </form>
+    </div>
+</header>
+
+@* באנר מידע ליוזר *@
+<div class="container my-5">
+    <div class="card h-100" style="border: 1px solid #dee2e6; border-radius: 0.5rem; box-shadow: 0 4px 8px rgba(0,0,0,0.05); background-color: #ffffff;">
+        <div class="card-body p-3 text-center" dir="rtl">
+            <div class="d-flex align-items-center justify-content-center flex-nowrap" style="overflow-x: auto; gap: 20px;">
+                <h6 style="white-space: nowrap; margin-bottom: 0; color: #333;">
+                    📍 מוצאים מקום שמעניין אתכם? לחיצה על <strong>סמל הסיכה</strong> בכרטיס תפתח עבורכם את המיקום המדויק ב-Google Maps לניווט קל ומהיר.
+                </h6>
+                <img src="/images/logo2.png" alt="Logo" style="height: 45px; width: auto; flex-shrink: 0;">
+            </div>
+        </div>
+    </div>
+</div>
+
+@* הצגת רשימת האטרקציות המסוננות *@
+<div class="row text-center">
+    @if (filteredAttractions == null || !filteredAttractions.Any())
+    {
+        @* הודעה במידה ולא נמצאו תוצאות *@
+        <div class="col-12">
+            <div class="alert alert-warning text-center" role="alert">
+                <strong>אטרקציה לא נמצאה.</strong> נסו חיפוש אחר או בחרו "כל הקטגוריות".
+            </div>
+        </div>
+    }
+    else
+    {
+        @foreach (var attraction in filteredAttractions)
+        {
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 home-style-card">
+                    <img src="@attraction.ImageUrl" class="card-img-top" alt="@attraction.Name">
+                    <div class="card-body d-flex flex-column">
+                        @* כותרת וסיכה המקשרת ל-Google Maps *@
+                        <div class="card-title-container">
+                            <h5 class="card-title-text">@attraction.Name</h5>
+                            @* כפתור לב להוספה/הסרה *@
+
+                            @* תיקון שרשור מחרוזת הניווט לסיכה המקשרת לגוגל מפות *@
+                            <a href="https://www.google.com/maps/search/?api=1&query=@(Uri.EscapeDataString(attraction.Name + " Tokyo"))"
+                               target="_blank"
+                               class="map-pin"
+                               title="פתח ב-Google Maps">📍</a>
+                        </div>
+                        <p class="card-text-custom" dir="rtl">
+                            @attraction.Description
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? Q { get; set; }
+    [SupplyParameterFromQuery] public string? Cat { get; set; } = string.Empty;
+
+    private List<Attraction> allAttractions = new List<Attraction>();
+    private List<Attraction> filteredAttractions = new List<Attraction>();
+
+    // 1. הוסף את הפונקציה הזו כדי לטעון את הנתונים מהמסד
+    protected override async Task OnInitializedAsync()
+    {
+        // כאן אנחנו קוראים לכל האטרקציות מהשירות שלך
+        // שים לב: ודא שב-AttractionBase יש פונקציה שמחזירה רשימה (למשל GetAllAttractions)
+        // שנה את השם מ-GetAllAttractions ל-GetAttractions
+        allAttractions = AttractionService.GetAttractions();
+
+        FilterAttractions();
+    }
+
+    protected override void OnParametersSet() => FilterAttractions();
+
+    private void FilterAttractions()
+    {
+        // בדיקה ש-allAttractions לא null לפני הסינון
+        if (allAttractions == null) return;
+
+        var query = allAttractions.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(Q))
+        {
+            query = query.Where(a => a.Name.Contains(Q, StringComparison.OrdinalIgnoreCase) ||
+                                     a.Description.Contains(Q, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(Cat))
+        {
+            query = query.Where(a => a.Category != null && a.Category.Equals(Cat, StringComparison.OrdinalIgnoreCase));
+        }
+
+        filteredAttractions = query.ToList();
+    }
+}
+
+@* פוטר האתר *@
+<footer class="mt-5 pt-5 pb-4 footer-light">
+    <div class="container">
+        <div class="row text-end" dir="rtl">
+            <div class="col-md-4 mb-4">
+                <h7 style="font-weight: bold; margin-bottom: 0;">
+                    <a href="/landing" class="d-flex align-items-center" style="text-decoration: none; color: inherit; gap: 10px;">
+                        <img src="/images/logo2.png" alt="Logo" style="height:50px; width: auto; object-fit: contain;">
+                        <span>טוקיו-יומי - פשוט לחוות את טוקיו!</span>
+                    </a>
+                </h7>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <h6 class="fw-bold mb-3">ניווט</h6>
+                <ul class="list-unstyled">
+                    <li><a href="/landing" class="footer-link-light">דף הבית</a></li>
+                </ul>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <h6 class="fw-bold mb-3">מצא לפי קטגוריה</h6>
+                <ul class="list-unstyled">
+                    <li><a href="/gallery?cat=בילוי" class="footer-link-light">בילוי</a></li>
+                    <li><a href="/gallery?cat=טבע" class="footer-link-light">טבע</a></li>
+                    <li><a href="/gallery?cat=פארק" class="footer-link-light">פארק</a></li>
+                    <li><a href="/gallery?cat=מוזיאון" class="footer-link-light">מוזיאון</a></li>
+                    <li><a href="/gallery?cat=קניות" class="footer-link-light">קניות</a></li>
+                </ul>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <ul class="list-unstyled">
+                    <li><a href="/" class="footer-link-light">להתנתק</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr class="footer-divider">
+        <div class="text-center small text-muted">
+            טוקיו-יומי - פשוט לחוות את טוקיו! © 2025
+        </div>
+    </div>
+</footer>

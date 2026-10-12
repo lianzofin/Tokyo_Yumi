@@ -1,0 +1,302 @@
+﻿@page "/users"
+@using Tokyo_Yumi.Model
+@using Tokyo_Yumi.Data
+@using Tokyo_Yumi.Services
+@inject DatabaseService DatabaseService
+@inject NavigationManager NavManager
+@inject UserService UserService
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<PageTitle>ניהול צוות | טוקיו-יומי</PageTitle>
+
+@* ייבוא פונט Rubik כפי שמופיע בגלריה *@
+<style>
+    html, body, * {
+        font-family: 'Rubik', sans-serif !important;
+    }
+
+        /* ביטול Outline כחול */
+        *:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+    body {
+        overflow-x: hidden;
+        background-color: #ffffff;
+        color: #333;
+    }
+
+    /* --- Hero Section - מלבן נקי --- */
+    .admin-hero-full {
+        width: 100vw !important;
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw !important;
+        margin-right: -50vw !important;
+        background-image: linear-gradient(rgba(142, 51, 43, 0.85), rgba(0,0,0,0.75)), url('images/newGif.gif');
+        background-size: cover;
+        background-position: center;
+        padding: 70px 20px;
+        min-height: 30vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        border-radius: 0 !important;
+    }
+
+    /* --- Navbar - Outline אפור --- */
+    .top-nav-bar {
+        background-color: #ffffff;
+        border-bottom: 1px solid #dee2e6;
+        padding: 12px 30px;
+    }
+
+    .nav-link-btn {
+        text-decoration: none;
+        color: #8E332B;
+        font-weight: 500;
+        padding: 8px 18px;
+        border: 1px solid #dee2e6; /* Outline אפור זהה להתנתק/אהובים */
+        border-radius: 6px;
+        transition: all 0.2s ease-in-out;
+        background: transparent;
+        font-size: 0.95rem;
+    }
+
+        .nav-link-btn:hover {
+            background-color: #f8f9fa;
+            border-color: #8E332B;
+        }
+
+    /* --- כרטיסים וטבלה - עיצוב Outline לבן --- */
+    .outline-card {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 8px;
+        box-shadow: none;
+    }
+
+    .admin-table-container {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #ffffff;
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .custom-table thead th {
+            background-color: #fafafa;
+            color: #8E332B;
+            padding: 18px;
+            border-bottom: 2px solid #eee;
+            font-weight: 700;
+        }
+
+        .custom-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+    .btn-tokyo-red {
+        background-color: #8E332B;
+        color: white;
+        border: none;
+        font-weight: 500;
+        border-radius: 6px;
+    }
+
+    .role-badge {
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        border: 1px solid #dee2e6;
+    }
+
+    .role-admin {
+        border-color: #8E332B;
+        color: #8E332B;
+        background: #fff5f5;
+    }
+
+    .role-user {
+        border-color: #dee2e6;
+        color: #777;
+        background: #fdfdfd;
+    }
+
+    .hero-title-shadow {
+        /* צל רך מסביב וצל חזק יותר בצדדים */
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8), 0px 0px 4px rgba(0, 0, 0, 0.5);
+    }
+</style>
+
+<div class="tokyo-yumi-layout">
+    <nav class="top-nav-bar d-flex justify-content-between align-items-center p-3">
+        <div class="right-nav-section d-flex align-items-center">
+            <h7 style="font-weight: bold; margin-bottom: 0;">
+                <a href="/landing" class="d-flex align-items-center" style="text-decoration: none; color: inherit; gap: 10px;">
+                    <img src="/images/logo2.png" alt="Logo" style="height:50px; width: auto; object-fit: contain;">
+                    <span>טוקיו-יומי - פשוט לחוות את טוקיו!</span>
+                </a>
+            </h7>
+        </div>
+
+        <div class="left-nav-section d-flex align-items-center">
+            <a href="/" class="nav-link-btn users-list-btn"><strong>להתנתק</strong></a>
+        </div>
+    </nav>
+</div>
+
+@if (currentUser != null && currentUser.Role?.ToLower() == "admin")
+{
+    <header class="admin-hero-full mb-5 text-center">
+        <h1 class="display-4 fw-bold mb-3 hero-title-shadow">
+            ניהול משתמשים
+        </h1>
+        <h3 class="fw-bold mb-4 hero-title-shadow" style="max-width: 900px;">
+            מרכז בקרה ושליטה על הרשאות המערכת
+        </h3>
+    </header>
+
+    <div class="container mb-5" dir="rtl">
+
+        @* טופס הוספה עם Outline אפור *@
+        <div class="card outline-card mb-5">
+            <div class="card-body p-4">
+                <h5 style="font-weight: 700; color: #8E332B; margin-bottom: 20px;">רישום משתמש חדש</h5>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted mb-1">שם מלא</label>
+                        <input class="form-control" @bind="newName"/>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted mb-1">שם משתמש</label>
+                        <input class="form-control" @bind="newUserName" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-muted mb-1">סיסמה</label>
+                        <input class="form-control" @bind="newPassword" type="password" />
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-tokyo-red w-100 py-2" @onclick="AddUser">צור משתמש</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* טבלת המשתמשים *@
+        <div class="admin-table-container">
+            <table class="custom-table text-end">
+                <thead>
+                    <tr>
+                        <th>שם מלא</th>
+                        <th>שם משתמש</th>
+                        <th>תפקיד</th>
+                        <th class="text-center">פעולות</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in users)
+                    {
+                        <tr>
+                            @if (editingUserId == u.Id)
+                            {
+                                <td><input class="form-control form-control-sm" @bind="tempFullName" /></td>
+                                <td><input class="form-control form-control-sm" @bind="tempUsername" /></td>
+                                <td><span class="role-badge role-admin">@u.Role</span></td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-success px-3 me-1" @onclick="() => SaveEdit(u.Id)">שמור</button>
+                                    <button class="btn btn-sm btn-outline-secondary px-3" @onclick="CancelEdit">ביטול</button>
+                                </td>
+                            }
+                            else
+                            {
+                                <td><span style="font-weight: 500;">@u.Name</span></td>
+                                <td style="color: #666;">@u.UserName</td>
+                                <td>
+                                    <span class="role-badge @(u.Role?.ToLower() == "admin" ? "role-admin" : "role-user")">
+                                        @(u.Role ?? "User")
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary px-3 me-2" @onclick="() => StartEdit(u)">עריכה</button>
+                                    <button class="btn btn-sm btn-outline-danger px-3" @onclick="() => DeleteUserById(u.Id)">מחיקה</button>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-center" style="margin-top: 150px;">
+        <div class="spinner-border text-danger" role="status"></div>
+        <p class="mt-4">מאמת הרשאות...</p>
+    </div>
+}
+
+@code {
+    private List<User> users = new();
+    private User? currentUser;
+
+    private string newName = "";
+    private string newUserName = "";
+    private string newPassword = "";
+    private string? editingUserId = null;
+    private string tempFullName = "";
+    private string tempUsername = "";
+
+    protected override async Task OnInitializedAsync() { await Task.Yield(); }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+            currentUser = await UserService.GetUserAsync();
+
+            if (currentUser != null && currentUser.Role?.ToLower() == "admin")
+            {
+                LoadUsers();
+                StateHasChanged();
+            }
+            else
+            {
+                await Task.Delay(500);
+                if (currentUser?.Role?.ToLower() != "admin")
+                {
+                    NavManager.NavigateTo("/");
+                }
+            }
+        }
+    }
+
+    private void LoadUsers() => users = DatabaseService.GetUsers() ?? new List<User>();
+    private void StartEdit(User u) { editingUserId = u.Id; tempFullName = u.Name; tempUsername = u.UserName; }
+    private void CancelEdit() => editingUserId = null;
+    private void SaveEdit(string id) { DatabaseService.UpdateUserDetails(id, tempFullName, tempUsername); editingUserId = null; LoadUsers(); }
+    private void AddUser()
+    {
+        if (string.IsNullOrWhiteSpace(newName) || string.IsNullOrWhiteSpace(newUserName)) return;
+        var newUser = new User { Id = Guid.NewGuid().ToString(), Name = newName, UserName = newUserName, Password = newPassword, Role = "user" };
+        DatabaseService.AddUser(newUser);
+        newName = ""; newUserName = ""; newPassword = "";
+        LoadUsers();
+    }
+    private void DeleteUserById(string id) { DatabaseService.DeleteUser(id); LoadUsers(); }
+}

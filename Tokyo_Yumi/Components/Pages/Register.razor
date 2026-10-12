@@ -1,0 +1,282 @@
+﻿@page "/register"
+@using Tokyo_Yumi.Data
+@using Tokyo_Yumi.Model
+@inject DatabaseService DatabaseService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+@using Tokyo_Yumi.Services
+
+<PageTitle>הרשמה למערכת | טוקיו-יומי</PageTitle>
+
+<style>
+    /* ביטול גלילה ושוליים ברמת הדף */
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        background-color: #ffffff;
+        font-family: sans-serif;
+    }
+
+    .tokyo-yumi-layout {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* התפריט העליון */
+    .top-nav-bar {
+        padding: 15px 25px;
+        flex-shrink: 0;
+    }
+
+    /* עטיפה שממרכזת את הכרטיס */
+    .split-container-wrapper {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        overflow: hidden;
+    }
+
+    /* כרטיס ההרשמה */
+    .split-card {
+        display: flex;
+        max-width: 1100px;
+        width: 100%;
+        max-height: 85vh;
+        border-radius: 20px;
+        overflow: hidden;
+        background-color: #fff;
+        border: 1px solid #eeeeee;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+
+    /* צד שמאל: GIF עם ה-Fade האדום המבוקש */
+    .panel-left-image {
+        width: 50%;
+        /* החלת הגרדיאנט האדום ישירות על הרקע */
+        background-image: linear-gradient(rgba(142, 51, 43, 0.85), rgba(0, 0, 0, 0.75)), url('images/tokyo1.gif');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        position: relative;
+    }
+
+        /* הסרת שכבת ה-overlay הישנה כדי שלא תסתיר את האדום */
+        .panel-left-image::before {
+            display: none;
+        }
+
+        .panel-left-image h1, .panel-left-image h2 {
+            color: #ffffff !important;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.6);
+            position: relative;
+            z-index: 2;
+            margin: 10px 0;
+        }
+
+    /* צד ימין: טופס */
+    .panel-right-form {
+        width: 50%;
+        padding: 40px 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: white;
+    }
+
+    .form-row {
+        text-align: right;
+        margin: 12px 0;
+    }
+
+        .form-row label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-row input {
+            width: 100%;
+            height: 42px;
+            padding: 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: border 0.3s;
+        }
+
+            .form-row input:focus {
+                outline: none;
+                border-color: #8E332B;
+            }
+
+    /* כפתורים בעיצוב המעוגל */
+    .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+        margin-top: 25px;
+    }
+
+    .tokyo-btn {
+        width: 100%;
+        max-width: 320px;
+        padding: 13px 0;
+        border-radius: 50px;
+        font-weight: 700;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1rem;
+    }
+
+    .primary-tokyo {
+        background-color: #8E332B;
+        color: white;
+        border: none;
+        box-shadow: 0 4px 6px rgba(142, 51, 43, 0.2);
+    }
+
+        .primary-tokyo:hover {
+            background-color: #6d2721;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(142, 51, 43, 0.3);
+        }
+
+    .ghost-link {
+        background-color: transparent;
+        color: #8E332B;
+        border: 2px solid #8E332B;
+    }
+
+        .ghost-link:hover {
+            background-color: #f9f2f1;
+            transform: translateY(-2px);
+        }
+
+    .status {
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 500;
+    }
+
+        .status.ok {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status.err {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+</style>
+
+<div class="tokyo-yumi-layout">
+    <nav class="top-nav-bar">
+        <a href="/" style="text-decoration: none; color: inherit; font-weight: bold; display: flex; align-items: center; gap: 10px;">
+            <img src="/images/logo2.png" alt="Logo" style="height:50px;">
+            <span>טוקיו-יומי - פשוט לחוות את טוקיו!</span>
+        </a>
+    </nav>
+
+    <div class="split-container-wrapper">
+        <div class="split-card">
+            <section class="panel-left-image">
+                <div style="text-align: center;">
+                    <h1>מוכנים לגלות את טוקיו?</h1>
+                    <h2>צרו חשבון והתחילו לתכנן</h2>
+                </div>
+            </section>
+
+            <section class="panel-right-form" dir="rtl">
+                <h2 style="color: #8E332B; text-align: center; font-weight: 800; margin-bottom: 20px;">הרשמה למערכת</h2>
+
+                <EditForm Model="@newUser" OnValidSubmit="HandleRegistration">
+                    <DataAnnotationsValidator />
+
+                    @if (!string.IsNullOrEmpty(message))
+                    {
+                        <div class="status @(isSuccess ? "ok" : "err")">@message</div>
+                    }
+
+                    <div class="form-row">
+                        <label>שם מלא</label>
+                        <InputText @bind-Value="name" placeholder="הכנס שם מלא" />
+                    </div>
+
+                    <div class="form-row">
+                        <label>שם משתמש</label>
+                        <InputText @bind-Value="userName" placeholder="בחר שם משתמש" />
+                    </div>
+
+                    <div class="form-row">
+                        <label>סיסמה</label>
+                        <InputText type="password" @bind-Value="password" placeholder="בחר סיסמה" />
+                    </div>
+
+                    <div class="actions">
+                        <button type="submit" class="tokyo-btn primary-tokyo">הרשמה</button>
+                        <a class="tokyo-btn ghost-link" href="/login">כבר יש לי חשבון</a>
+                    </div>
+                </EditForm>
+            </section>
+        </div>
+    </div>
+</div>
+
+@code {
+    private User newUser = new();
+    private string? message;
+    private bool isSuccess = false;
+    private string name = "";
+    private string userName = "";
+    private string password = "";
+
+    private async Task HandleRegistration()
+    {
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
+        {
+            isSuccess = false;
+            message = "אנא מלא את כל השדות.";
+            return;
+        }
+
+        try
+        {
+            string newId = Guid.NewGuid().ToString();
+            string defaultRole = "user";
+
+            User userToSave = new User(newId, name, userName, password, defaultRole);
+
+            DatabaseService.AddUser(userToSave);
+
+            isSuccess = true;
+            message = "ההרשמה בוצעה בהצלחה! מנווט לדף הכניסה...";
+
+            await Task.Delay(2000);
+            Nav.NavigateTo("/login");
+        }
+        catch (Exception ex)
+        {
+            isSuccess = false;
+            message = "שגיאה: " + ex.Message;
+        }
+    }
+}

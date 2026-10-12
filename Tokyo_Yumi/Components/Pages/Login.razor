@@ -1,0 +1,299 @@
+﻿@page "/login"
+@using Tokyo_Yumi.Data
+@using Tokyo_Yumi.Model
+@using Tokyo_Yumi.Services
+@inject UserService UserService
+@inject DatabaseService DatabaseService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>כניסה למערכת | טוקיו-יומי</PageTitle>
+
+<style>
+    /* --- הגדרות בסיס --- */
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        background-color: #ffffff;
+        font-family: sans-serif;
+    }
+
+    .tokyo-yumi-layout {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .top-nav-bar {
+        padding: 15px 25px;
+        flex-shrink: 0;
+    }
+
+    .split-container-wrapper {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        overflow: hidden;
+    }
+
+    .split-card {
+        display: flex;
+        max-width: 1100px;
+        width: 100%;
+        max-height: 85vh;
+        border-radius: 20px; /* עיגול פינות מודרני */
+        overflow: hidden;
+        background-color: #fff;
+        border: 1px solid #eeeeee;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+
+    .panel-left-image {
+        width: 50%;
+        /* שילוב הגרדיאנט האדום ישירות עם ה-GIF */
+        background-image: linear-gradient(rgba(142, 51, 43, 0.85), rgba(0, 0, 0, 0.75)), url('images/Party Japan GIF by Rojuu.gif');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        position: relative;
+    }
+
+        /* ביטול ה-before הישן שהיה שחור בלבד */
+        .panel-left-image::before {
+            display: none;
+        }
+
+        .panel-left-image h1, .panel-left-image h2 {
+            color: #ffffff !important;
+            font-weight: bold;
+            text-align: center;
+            /* צל טקסט חזק יותר כדי שיבלוט על האדום */
+            text-shadow: 2px 4px 10px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 2;
+            margin: 10px 0;
+        }
+
+    /* --- פאנל טופס --- */
+    .panel-right-form {
+        width: 50%;
+        padding: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: white;
+    }
+
+    .form-row {
+        text-align: right;
+        margin: 15px 0;
+    }
+
+        .form-row label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-row input {
+            width: 100%;
+            height: 45px;
+            padding: 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: border 0.3s;
+        }
+
+            .form-row input:focus {
+                outline: none;
+                border-color: #8E332B;
+            }
+
+    /* --- כפתורים בעיצוב החדש (זהה לדף הפתיחה) --- */
+    .actions {
+        display: flex;
+        flex-direction: column; /* כפתורים אחד מתחת לשני כמו בדף הפתיחה */
+        gap: 15px;
+        align-items: center;
+        margin-top: 30px;
+    }
+
+    .tokyo-btn {
+        width: 100%; /* תופס את כל רוחב הטופס */
+        max-width: 320px;
+        padding: 14px 0;
+        border-radius: 50px; /* עיצוב עגול "Pill" */
+        font-weight: 700;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1rem;
+    }
+
+    .primary-tokyo {
+        background-color: #8E332B;
+        color: white;
+        border: none;
+        box-shadow: 0 4px 6px rgba(142, 51, 43, 0.2);
+    }
+
+        .primary-tokyo:hover {
+            background-color: #6d2721;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(142, 51, 43, 0.3);
+        }
+
+    .ghost-link {
+        background-color: transparent;
+        color: #8E332B;
+        border: 2px solid #8E332B;
+    }
+
+        .ghost-link:hover {
+            background-color: #f9f2f1;
+            transform: translateY(-2px);
+        }
+
+    /* --- סטטוס --- */
+    .status {
+        padding: 12px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 500;
+    }
+
+        .status.ok {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status.err {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+</style>
+
+<div class="tokyo-yumi-layout">
+    <nav class="top-nav-bar">
+        <a href="/" style="text-decoration: none; color: inherit; font-weight: bold; display: flex; align-items: center; gap: 10px;">
+            <img src="/images/logo2.png" alt="Logo" style="height:50px;">
+            <span>טוקיו-יומי - פשוט לחוות את טוקיו!</span>
+        </a>
+    </nav>
+
+    <div class="split-container-wrapper">
+        <div class="split-card">
+            <section class="panel-left-image">
+                <div style="text-align: center;">
+                    <h1>מוכנים לגלות את טוקיו?</h1>
+                    <h2>התחברו להמשך תכנון הטיול</h2>
+                </div>
+            </section>
+
+            <section class="panel-right-form" dir="rtl">
+                <h2 style="color: #8E332B; text-align: center; font-weight: 800; margin-bottom: 25px;">
+                    כניסה למערכת
+                </h2>
+
+
+                @if (!string.IsNullOrEmpty(status))
+                {
+                    <div class="status @(isOk ? "ok" : "err")">@status</div>
+                }
+
+                <div class="form-row">
+                    <label>שם משתמש</label>
+                    <input @bind="userName" placeholder="הקלד שם משתמש" />
+                </div>
+
+                <div class="form-row">
+                    <label>סיסמה</label>
+                    <input @bind="password" type="password" placeholder="הקלד סיסמה" @onkeypress="HandleKeyPress" />
+                </div>
+
+                <div class="actions">
+                    <button class="tokyo-btn primary-tokyo" @onclick="SignIn">כניסה</button>
+                    <a class="tokyo-btn ghost-link" href="/register">הרשמה כמשתמש חדש</a>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+@code {
+    // ... הקוד ה-C# שלך נשאר זהה ...
+    private string userName = "";
+    private string password = "";
+    private string status = "";
+    private bool isOk = false;
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SignIn();
+        }
+    }
+
+    private async Task SignIn()
+    {
+        status = "";
+
+        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
+        {
+            status = "אנא מלא את כל השדות.";
+            isOk = false;
+            return;
+        }
+
+        try
+        {
+            var user = DatabaseService.GetUsers()
+                        .FirstOrDefault(u => u.GetUserName().Equals(userName.Trim(), StringComparison.OrdinalIgnoreCase)
+                                        && u.GetPassword() == password);
+
+            if (user != null)
+            {
+                isOk = true;
+                status = "מתחבר...";
+
+                await UserService.SetUserAsync(user);
+
+                await Task.Delay(500);
+
+                if (user.Role?.ToLower() == "admin")
+                {
+                    Nav.NavigateTo("/users");
+                }
+                else
+                {
+                    Nav.NavigateTo("/landing");
+                }
+            }
+            else
+            {
+                isOk = false;
+                status = "פרטי התחברות שגויים.";
+            }
+        }
+        catch (Exception ex)
+        {
+            status = "שגיאת מערכת: " + ex.Message;
+            isOk = false;
+        }
+    }
+}

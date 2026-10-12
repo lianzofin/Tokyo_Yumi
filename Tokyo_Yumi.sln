@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36623.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tokyo_Yumi", "Tokyo_Yumi\Tokyo_Yumi.csproj", "{502A3C5E-0B55-4778-A014-D5200771A505}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{502A3C5E-0B55-4778-A014-D5200771A505}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{502A3C5E-0B55-4778-A014-D5200771A505}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{502A3C5E-0B55-4778-A014-D5200771A505}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{502A3C5E-0B55-4778-A014-D5200771A505}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {010A7129-A536-4B4E-BFEB-A4E9577B34DD}
+	EndGlobalSection
+EndGlobal
